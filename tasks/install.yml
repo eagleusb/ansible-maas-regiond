@@ -1,91 +1,53 @@
 ---
-- name: install | Installing Pre-Reqs
-  apt:
-    name: "{{ item }}"
-    state: "present"
-  with_items:
-    - 'build-essential'
-    - 'libffi-dev'
-    - 'libssl-dev'
-    - 'python-dev'
-    - 'python-pip'
-    - 'python-setuptools'
-    - 'python3-setuptools'
-    - 'python3-pip'
-
-- name: install | Adding MAAS Repo Info
+- name: "install | add maas ppa repository"
   apt_repository:
-    repo: '{{ maas_repo }}'
+    repo: "{{ maas.repository }}"
     state: "present"
+    update_cache: true
 
-- name: install | Installing MAAS (Single-Node)
-  apt:
+- name: "install | ensure requirements are installed"
+  package:
+    name: "{{ maas_regiond.requirements }}"
+    state: "present"
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: "install | install all maas components (single-node)"
+  package:
     name: "maas"
     state: "present"
-  when: maas_single_node_install
+    update_cache: true
+    cache_valid_time: 3600
+  when: maas.single_node
+  notify: "init maas controller"
 
-- name: install | Installing maas-region-controller
-  apt:
-    name: "maas-region-controller"
+- name: "install | install maas-region-controller"
+  package:
+    name: "{{ maas_regiond.package }}"
     state: "present"
-  when: >
-        not maas_single_node_install and
-        inventory_hostname in groups['maas_region_controller']
+    update_cache: true
+    cache_valid_time: 3600
+  when: not maas.single_node
+  notify: "init maas controller"
 
-- name: install | Installing maas-rack-controller
-  apt:
-    name: "maas-rack-controller"
+- name: "install | update postgres password"
+  postgresql_user:
+    db: "{{ maas_database.name }}"
+    name: "{{ maas_database.user }}"
+    password: "{{ maas_database.password | mandatory() }}"
+    encrypted: yes
+  become: true
+  become_user: postgres
+
+- name: "install | install kvm support"
+  package:
+    name: "{{ _kvm }}"
     state: "present"
-  when: >
-        not maas_single_node_install and
-        inventory_hostname in groups['maas_rack_controller']
-
-- name: install | Checking If MAAS Admin Account Has Been Created
-  stat:
-    path: "/etc/maas/.admin_account_created"
-  register: "maas_admin_account_check"
-
-- name: install | Creating MAAS Admin Account(s)
-  command: "maas createadmin --username {{ item.username }} --email {{ item.email }} --password {{ item.password }}"
-  register: "maas_admin_account_created"
-  with_items: '{{ maas_adminusers }}'
-  when: >
-        (maas_single_node_install and
-        not maas_admin_account_check.stat.exists) or
-        (not maas_single_node_install and
-          not maas_admin_account_check.stat.exists and
-          inventory_hostname in groups['maas_region_controller'])
-
-- name: install | Marking MAAS Admin Account As Being Created
-  file:
-    path: "/etc/maas/.admin_account_created"
-    state: "touch"
-  when: maas_admin_account_created.changed
-
-# Install libvirt-bin to control KVM instances
-- name: install | Installing Libvirt (KVM)
-  apt:
-    name: "libvirt-bin"
-    state: "present"
-
-- name: install | Installing MAAS Python Module(s)
-  pip:
-    name: "{{ item }}"
-    state: "present"
-  with_items:
-    - 'argparse'
-    - 'argparse_config'
-    - 'httplib2'
-    - 'jinja2'
-    - 'maasutil'
-    - 'oauth'
-    - 'pyyaml'
-  when: not ansible_check_mode
-
-# - name: install | Installing MAAS Python Module(s)
-#   pip:
-#     name: "{{ item }}"
-#     state: "present"
-#     executable: pip3
-#   with_items:
-#     - 'python-libmaas'
+  loop:
+    - "libvirt-bin"
+    - "libvirt-clients"
+    - "libvirt-daemon-system"
+    - "qemu-kvm"
+  loop_control:
+    loop_var: _kvm
+  when: maas_regiond.kvm

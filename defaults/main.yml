@@ -1,16 +1,34 @@
 ---
-# defaults file for ansible-maas
-maas_adminusers:
-  - username: 'root'
-    email: 'admin@{{ maas_dns_domain }}'
-    password: 'r00tm3'
-maas_dns_domain: 'vagrant.local'
-maas_region_controller: '192.168.250.10'
-maas_region_controller_url: 'http://{{ maas_region_controller }}:5240/MAAS'
-maas_repo: 'ppa:maas/stable'
+maas:
+  repository: "ppa:maas/stable"
+  single_node: false
 
-# Defines if maas user should generate ssh keys
-# Usable for remote KVM/libvirt power actions
-maas_setup_user: false
+maas_database:
+  host: localhost
+  name: maasdb
+  user: maas
+  password:
+  port: 5432
 
-maas_single_node_install: true
+maas_regiond:
+  requirements:
+    - "libpq-dev"
+    - "postgresql-client"
+    - "python-psycopg2"
+    - "python3-psycopg2"
+  package: "maas-region-controller"
+  kvm: false
+  api:
+    scheme: "http"
+    url: "{{ ansible_default_ipv4.address }}:5240/MAAS"
+
+maas_dns:
+  domain: "maas"
+
+maas_users:
+  admins: []
+  users: []
+
+maas_libs:
+  - "python3-libmaas"
+  - "python3-maas-client"
