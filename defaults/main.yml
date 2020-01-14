@@ -22,13 +22,61 @@ maas_regiond:
     scheme: "http"
     url: "{{ ansible_default_ipv4.address }}:5240/MAAS"
 
+maas_libs:
+  - "python3-libmaas"
+  - "python3-maas-client"
+
+maas_name: "{{ ansible_hostname }}"
+
 maas_dns:
   domain: "maas"
+  ttl: 30
+  upstream: []
+
+maas_storage:
+  default_layout: "lvm"
+  disk_erasing:
+    enabled: False
+    secure: True
+    quick: False
+
+maas_proxy:
+  enabled: True
+  port: 8000
+  peer_proxy: False
+  use_rack_proxy: True
+
+maas_ntp:
+  server: "europe.pool.ntp.org"
+  external_only: False
+
+maas_syslog:
+  remote: None
+  port: 5247
+
+maas_discovery:
+  enabled: False
+  interval: 3600
+  last: 0
+
+maas_image:
+  auto_import: True
+  no_proxy: False
+
+maas_auth:
+  external_auth_url:
+  external_auth_user:
+  external_auth_key:
+  external_auth_domain:
+  external_auth_admin_group:
+  macaroon_private_key:
+  rbac_url:
 
 maas_users:
   admins: []
   users: []
 
-maas_libs:
-  - "python3-libmaas"
-  - "python3-maas-client"
+maas_prometheus:
+  enabled: False
+  push_gateway: None
+  push_interval: 60
