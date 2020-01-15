@@ -39,7 +39,7 @@ prefer_v4_proxy: False
 
 # NTP
 ntp_servers: {{ maas_ntp.server }}
-ntp_external_only: {{ maas_ntp.exernal_only }}
+ntp_external_only: {{ maas_ntp.external_only }}
 
 # Syslog
 remote_syslog: {{ maas_syslog.remote }}
@@ -80,15 +80,15 @@ max_node_installation_results: 3
 # Notifications
 subnet_ip_exhaustion_threshold_count: 16
 
-{% if maas_auth is defined and maas_auth.external_auth_url | length() > 0 %}
+{% if maas_auth is defined and maas_auth.external_auth_url %}
 # Authentication
-external_auth_url:
-external_auth_user:
-external_auth_key:
-external_auth_domain:
-external_auth_admin_group:
-macaroon_private_key: None
-rbac_url:
+external_auth_url: {{ maas_auth.external_auth_url }}
+external_auth_user: {{ maas_auth.external_auth_user }}
+external_auth_key: {{ maas_auth.external_auth_key }}
+external_auth_domain: {{ maas_auth.external_auth_domain }}
+external_auth_admin_group: {{ maas_auth.external_auth_admin_group }}
+macaroon_private_key: {{ maas_auth.macaroon_private_key }}
+rbac_url: {{ maas_auth.rbac_url }}
 {% endif %}
 
 # MAAS Architecture
