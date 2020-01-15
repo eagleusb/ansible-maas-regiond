@@ -7,3 +7,4 @@
     owner: maas
     group: maas
     backup: yes
+  notify: "restart all maas-regiond services"
